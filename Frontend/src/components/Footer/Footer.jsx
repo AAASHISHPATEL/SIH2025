@@ -2,11 +2,9 @@
 import { NavLink } from "react-router-dom";
 import {
   
-  LinkedinIcon,
-  InstagramIcon,
+ 
   ChevronUpIcon,
-  Facebook,
-  Youtube,
+  
 } from "lucide-react";
 import "./Footer.css";
 
@@ -84,36 +82,7 @@ const Footer = () => {
               Follow us on social media to stay updated with the latest news,
               events, and innovations.
             </p>
-            <div className="flex justify-start space-x-6">
-              <a
-                href="https://www.youtube.com/@saenitdgp"
-                target="_blank"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-7 h-7 hover:text-[#63b3ed]" />
-              </a>
-              <a
-                href="https://www.linkedin.com/company/sae-nitdgp/"
-                target="_blank"
-                aria-label="LinkedIn"
-              >
-                <LinkedinIcon className="w-7 h-7 hover:text-[#63b3ed]" />
-              </a>
-              <a
-                href="https://www.instagram.com/sae.nitd"
-                target="_blank"
-                aria-label="Instagram"
-              >
-                <InstagramIcon className="w-7 h-7 hover:text-[#63b3ed]" />
-              </a>
-              <a
-                href="https://www.facebook.com/SAENITD"
-                target="_blank"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-7 h-7 hover:text-[#63b3ed]" />
-              </a>
-            </div>
+            
           </div>
 
           {/* Google Map */}

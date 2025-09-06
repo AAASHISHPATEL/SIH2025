@@ -65,6 +65,7 @@ p {
 
 .background-container { 
   background: #acd8f8; 
+  
   position: absolute;
   inset: 0;
   z-index: -1;
