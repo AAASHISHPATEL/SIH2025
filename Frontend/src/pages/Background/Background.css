@@ -1,0 +1,235 @@
+/* html {
+  font-size: 100%;
+
+  @media (min-width: 40em) {
+    font-size: 112.5%;
+  }
+  @media (min-width: 64em) {
+    font-size: 125%;
+  }
+} */
+
+
+
+body {
+  /* background-color: #1a1d23; */
+  /* color: red; */
+  /* font-family: "Source Sans Pro", "Source Sans 3", sans-serif; */
+  /* height: 190vh; */
+  /* padding-block-start: 5vh; */
+}
+
+h1 {
+  font-size: 3.175rem;
+  font-weight: 700;
+  line-height: 1.13;
+  margin-top: 0;
+  margin-bottom: 1.762rem;
+  text-rendering: optimizeLegibility;
+}
+
+p {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.22;
+  margin-bottom: .9375rem;
+}
+
+.text-container {
+  display: grid;
+  height: 100%;
+  align-content: center;
+  padding-inline: .9375rem;
+  margin-inline: auto;
+  
+  @media (min-width: 64em) {
+    width: 83%;
+  }
+}
+
+/* size of the scene */
+.hero-block {
+  position: relative;
+  aspect-ratio: 9/18;
+  /* z-index:-10; */
+  
+  @media (min-width: 40em) {
+    aspect-ratio : 100/87;
+  }
+  @media (min-width: 64em) {
+    aspect-ratio : 16/9;
+  }
+}
+
+
+
+.background-container { 
+  background: #acd8f8; 
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 1;
+}
+
+.scene {
+  
+}
+.scene__dots {
+  position: absolute;
+  width: 200px;
+  aspect-ratio: 1;
+  border-radius: 5in;
+  top: 40%;
+  left: 60%;
+  overflow: hidden;
+  background-image: radial-gradient(circle, rgb(4, 30, 48) 2px, transparent 2px);
+  background-size: 9px 9px;
+  animation: fade-in 1s .2s cubic-bezier(.22, 1, .36, 1) both;
+  
+  @media (prefers-reduced-motion: no-preference) {
+    animation: translate linear both, fade-in 1s .2s cubic-bezier(.22, 1, .36, 1) both;
+    animation-timeline: scroll(), auto;
+  }
+
+  @media (min-width: 40em) {
+    top: 25%;
+    left: 40%;
+    width: 300px;
+    height: 300px;
+    background-size: 11px 11px;
+  }
+}
+
+.scene__dots--small {
+    width: 250px;
+    height: 250px;
+    background-size: 8px auto;
+}
+
+
+
+.scene__line {
+  position: absolute;
+  height: 60px;
+  width: 2px;
+  top: 20%;
+  left: 50%;
+  left: var(--x);
+  top: var(--y);
+  rotate: var(--rotate);
+
+  animation: rotate linear both;
+  animation-timeline: scroll();
+
+  @supports (animation-timeline: view()) {
+    animation: rotate linear both, rotate2 60s linear infinite, fade-in 1s .3s cubic-bezier(.22, 1, .36, 1) both;
+    animation-timeline: scroll(), auto, auto;
+  }
+
+  @media (prefers-reduced-motion) {
+    animation: fade-in 1s .3s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  
+  @media (max-width: 40em) {
+    width: 3px
+  }
+}
+
+.scene__line--small {
+  width: 2px;
+}
+
+.scene__line--lightblue {
+  background-color: rgb(4, 30, 48);
+}
+
+.scene__line--darkblue {
+  background-color: rgb(4, 30, 48);
+}
+
+.scene__line--medium {
+    height: 90px;
+}
+
+.scene__line--large {
+    height: 160px;
+}
+
+.scene__line--xlarge {
+  height: 250px;
+  opacity: 0;
+
+  @media (min-width: 40em) {
+    opacity: 1;
+  }
+}
+
+
+
+
+
+
+
+@keyframes translate {
+  to {
+    translate: 0 calc(var(--y,0) - 100px);
+    background-position: 0, 100px;
+    
+  }
+}
+
+@keyframes rotate {
+  to {
+    rotate: calc(var(--rotate,0) + 1turn);
+  }
+}
+
+@keyframes rotate2 {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* Push the background behind all content */
+  overflow: hidden; /* Prevent scrollbars from appearing */
+  height: 100vh;
+  width: 100vw;
+}
+
+.scene {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.background-container {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+body {
+  margin: 0;
+  font-family: "Source Sans Pro", "Source Sans 3", sans-serif;
+  background-color: #1a1d23;
+  color: red; /* Change to suit your content color */
+}
+
+h1, p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Existing animations and scene styles remain unchanged */
