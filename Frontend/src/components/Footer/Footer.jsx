@@ -27,13 +27,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Logo Section */}
           <div>
-            <a href="https://saenitd.in/">
+            <a href="/">
               {" "}
-              {/* <img
-                src="https://i.ibb.co/fvZpdy8/SAE-Logo-White-3x.png"
-                alt="SAE Logo"
-                className="w-32 mb-4"
-              /> */}
               <h1 className="font-semibold text-2xl mb-4 w-32 text-blue-400">
                 FloatChat
               </h1>
@@ -51,7 +46,7 @@ const Footer = () => {
               <span className="absolute bottom-0 left-0 w-1/2 h-0.5 bg-custom-color"></span>
             </h3>
             <nav className="space-y-4 flex flex-col">
-              <NavLink to="/" className="hover:text-[#63b3ed]">
+              <NavLink to="/NearestARGO" className="hover:text-[#63b3ed]">
                 Nearest ARGO Floats
               </NavLink>
 
@@ -69,6 +64,10 @@ const Footer = () => {
               >
                 Trajectory & Comparison
               </NavLink>
+
+              <NavLink to="/Ingest" className="hover:text-[#63b3ed]">
+                Ingest
+              </NavLink>
             </nav>
           </div>
 
@@ -82,7 +81,6 @@ const Footer = () => {
               Follow us on social media to stay updated with the latest news,
               events, and innovations.
             </p>
-            
           </div>
 
           {/* Google Map */}

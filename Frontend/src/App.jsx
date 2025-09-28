@@ -1,64 +1,57 @@
-// import React from "react";
-import {  Route, Routes } from "react-router-dom";
-// import ThreeDScene from "./components/ThreeDScene";
+import { Route, Routes } from "react-router-dom";
 
-
-
-// import GoogleAuth from "./pages/GoogleAuth";
-
-// import LandingLayout from "./Layouts/LandingLayout";
-import MainLayout from "./Layouts/MainLayout";
 import NearestARGO from "./pages/NearestARGO/NearestARGO";
 import TrajectoryComparison from "./pages/Tragectory&Comparison/TrajectoryAndComparison";
 import ExploreIndex from "./pages/ExploreIndex/ExploreIndex";
 import Chat from "./pages/Chat/Chat";
+import Export from "./pages/Export/Export";
+import Ingest from "./pages/Ingest/Ingest";
+import LandingPage from "./pages/LandingPage/LandingPage";
+import LandingLayout from "./Layouts/LandingLayout";
+import SignUpSignIn from "./pages/SignUpSignIn/SignUpSignIn";
 
-import Background from "./pages/Background/Background";
+import SidebarLayout from "./components/SideBarLayout/SidebarLayout";
+import { AuthProvider } from "./auth/AuthContext";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Routes>
+        {/* Public routes */}
         <Route
           path="/"
           element={
-            <MainLayout>
-              <Background />
-              <NearestARGO />
-            </MainLayout>
+            <LandingLayout>
+              <LandingPage />
+            </LandingLayout>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LandingLayout>
+              <SignUpSignIn />
+            </LandingLayout>
           }
         />
 
-        <Route
-          path="/ExploreIndex"
-          element={
-            <MainLayout>
-              <Background />
-              <ExploreIndex />
-            </MainLayout>
-          }
-        />
-
-        <Route
-          path="/Chat"
-          element={
-            <MainLayout>
-              <Background />
-              <Chat />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/Trajectory&Comparison"
-          element={
-            <MainLayout>
-              <Background />
-              <TrajectoryComparison />
-            </MainLayout>
-          }
-        />
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<SidebarLayout />}>
+            <Route path="/NearestARGO" element={<NearestARGO />} />
+            <Route path="/Export" element={<Export />} />
+            <Route path="/Ingest" element={<Ingest />} />
+            <Route path="/ExploreIndex" element={<ExploreIndex />} />
+            <Route path="/Chat" element={<Chat />} />
+            <Route
+              path="/Trajectory&Comparison"
+              element={<TrajectoryComparison />}
+            />
+          </Route>
+        </Route>
       </Routes>
-    </>
+    </AuthProvider>
   );
 }
 

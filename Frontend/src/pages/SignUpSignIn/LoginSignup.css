@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+.loginSignup-body {
+  background: linear-gradient(135deg, #0f1016, #123b57);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+  color: #f0f0f0;
+}
+
+.loginSignup-container {
+  background-color: #1e1f29;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+  width: 780px;
+  max-width: 100%;
+  min-height: 500px;
+}
+
+.loginSignup-container h1 {
+  color: #ffffff;
+}
+
+.loginSignup-container p,
+.loginSignup-container span {
+  color: #cccccc;
+}
+
+.loginSignup-container button {
+  background: linear-gradient(to right, #5c6bc0, #512da8);
+  color: #fff;
+  font-size: 13px;
+  padding: 10px 45px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.loginSignup-container button:hover {
+  transform: scale(1.05);
+}
+
+.loginSignup-container button.loginSignup-hidden {
+  background-color: transparent;
+  border: 1px solid #fff;
+}
+
+.loginSignup-container form {
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  height: 100%;
+}
+
+.loginSignup-container input {
+  background-color: #2a2c39;
+  border: 1px solid #444;
+  margin: 8px 0;
+  padding: 12px 15px;
+  font-size: 14px;
+  border-radius: 8px;
+  width: 100%;
+  outline: none;
+  color: #f0f0f0;
+}
+
+.loginSignup-container input::placeholder {
+  color: #888;
+}
+
+/* ====== FIXED FORM CONTAINERS ====== */
+.loginSignup-form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  transition: opacity .4s ease, transform .4s ease;
+}
+
+/* Sign In lives LEFT */
+.loginSignup-sign-in {
+  left: 0;
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sign Up lives RIGHT */
+.loginSignup-sign-up {
+  left: 50%;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* When container is active → show Sign Up */
+.loginSignup-container.active .loginSignup-sign-up {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.loginSignup-container.active .loginSignup-sign-in {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ====== TOGGLE PANEL ====== */
+.loginSignup-toggle-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  transition: all 0.6s ease-in-out;
+  border-radius: 150px 0 0 100px;
+  z-index: 1000;
+}
+
+.loginSignup-container.active .loginSignup-toggle-container {
+  transform: translateX(-100%);
+  border-radius: 0 150px 100px 0;
+}
+
+.loginSignup-toggle {
+  background: linear-gradient(to right, #5c6bc0, #512da8);
+  color: #fff;
+  position: relative;
+  left: -100%;
+  height: 100%;
+  width: 200%;
+  transform: translateX(0);
+  transition: all 0.6s ease-in-out;
+}
+
+.loginSignup-container.active .loginSignup-toggle {
+  transform: translateX(50%);
+}
+
+.loginSignup-toggle-panel {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 30px;
+  text-align: center;
+  top: 0;
+  transition: all 0.6s ease-in-out;
+}
+
+.loginSignup-toggle-left {
+  transform: translateX(-200%);
+}
+
+.loginSignup-container.active .loginSignup-toggle-left {
+  transform: translateX(0);
+}
+
+.loginSignup-toggle-right {
+  right: 0;
+  transform: translateX(0);
+}
+
+.loginSignup-container.active .loginSignup-toggle-right {
+  transform: translateX(200%);
+}
+
+/* ====== INLINE ERROR ====== */
+.login-error-message {
+  color: #ff4d4d;
+  font-size: 13px;
+  margin-top: 6px;
+  width: 100%;
+  text-align: left;
+}
+
+/* ====== POPUP ====== */
+.popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 9999;
+  animation: fadeInOut 3s ease forwards;
+}
+
+.popup.success {
+  background: #4caf50;
+  color: white;
+}
+
+.popup.error {
+  background: #f44336;
+  color: white;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .loginSignup-container {
+    min-height: 560px;
+  }
+}

@@ -1,15 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
-import {
-  GoogleMap,
-  Marker,
-  InfoWindow,
-  useJsApiLoader,
-} from "@react-google-maps/api";
-
-const containerStyle = {
-  width: "100%",
-  height: "600px",
-};
+import { useState } from "react";
+import MapplsMap from "../../components/MapplsMap";
 
 export default function ExploreIndex() {
   // Filter states
@@ -27,18 +17,6 @@ export default function ExploreIndex() {
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  // Map ref
-  const mapRef = useRef(null);
-  const onLoad = useCallback((map) => {
-    mapRef.current = map;
-  }, []);
-
-  // Load Google Maps
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    id: "google-map-script",
-  });
-
   // Dummy fetch — replace with real API call
   const fetchNearest = () => {
     const n = Math.max(1, Number(limit) || 10);
@@ -47,32 +25,18 @@ export default function ExploreIndex() {
     const lonMinNum = Number(lonMin);
     const lonMaxNum = Number(lonMax);
 
-    const data = Array.from({ length: n }, (_, i) => {
-      return {
-        id: i + 1,
-        lat: +(latMinNum + Math.random() * (latMaxNum - latMinNum)).toFixed(5),
-        lon: +(lonMinNum + Math.random() * (lonMaxNum - lonMinNum)).toFixed(5),
-        file: `csio/profile_${String(i + 1).padStart(3, "0")}.nc`,
-        date: dateFrom || `202012${(i + 1).toString().padStart(2, "0")}000000`,
-        institution: institution || ["IN", "HZ", "AO"][i % 3],
-        ocean: ocean || "A",
-      };
-    });
+    const data = Array.from({ length: n }, (_, i) => ({
+      id: i + 1,
+      lat: +(latMinNum + Math.random() * (latMaxNum - latMinNum)).toFixed(5),
+      lon: +(lonMinNum + Math.random() * (lonMaxNum - lonMinNum)).toFixed(5),
+      file: `csio/profile_${String(i + 1).padStart(3, "0")}.nc`,
+      date: dateFrom || `202012${(i + 1).toString().padStart(2, "0")}000000`,
+      institution: institution || ["IN", "HZ", "AO"][i % 3],
+      ocean: ocean || "A",
+    }));
 
     setResults(data);
     setSelected(null);
-
-    // Scroll to map and fit bounds
-    setTimeout(() => {
-      const el = document.getElementById("map-section");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      if (mapRef.current && data.length) {
-        const bounds = new window.google.maps.LatLngBounds();
-        data.forEach((r) => bounds.extend({ lat: r.lat, lng: r.lon }));
-        mapRef.current.fitBounds(bounds);
-      }
-    }, 150);
   };
 
   // CSV download
@@ -94,16 +58,8 @@ export default function ExploreIndex() {
     link.remove();
   };
 
-  if (loadError) {
-    return (
-      <div className="p-6 text-red-400">
-        Error loading Google Maps. Check your API key and console.
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen text-white p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-semibold">
           Explore ARGO Index (SQLite/Postgres)
@@ -113,6 +69,7 @@ export default function ExploreIndex() {
         <div className="bg-gray-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-medium text-gray-100 mb-3">Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* lat_min */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">lat_min</span>
               <input
@@ -123,6 +80,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* lat_max */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">lat_max</span>
               <input
@@ -133,6 +91,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* lon_min */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">lon_min</span>
               <input
@@ -143,6 +102,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* lon_max */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">lon_max</span>
               <input
@@ -153,6 +113,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* Ocean */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">Ocean</span>
               <select
@@ -168,6 +129,7 @@ export default function ExploreIndex() {
               </select>
             </label>
 
+            {/* Institution */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">Institution</span>
               <select
@@ -192,6 +154,7 @@ export default function ExploreIndex() {
               </select>
             </label>
 
+            {/* date_from */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">
                 date_from (YYYYMMDDHHMMSS)
@@ -204,6 +167,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* date_to */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">
                 date_to (YYYYMMDDHHMMSS)
@@ -216,6 +180,7 @@ export default function ExploreIndex() {
               />
             </label>
 
+            {/* limit */}
             <label className="flex flex-col text-sm">
               <span className="text-gray-300 mb-1">limit</span>
               <input
@@ -243,100 +208,66 @@ export default function ExploreIndex() {
             Bounding box: (auto-fit to mapped results)
           </div>
 
-          <div className="rounded-lg overflow-hidden border border-gray-700">
-            {isLoaded ? (
-              <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={{ lat: Number(latMin), lng: Number(lonMin) }}
-                zoom={4.1}
-                onLoad={onLoad}
-              >
-                {results.map((r, idx) => (
-                  <Marker
-                    key={r.id}
-                    position={{ lat: r.lat, lng: r.lon }}
-                    label={{ text: `${idx + 1}`, className: "text-sm" }}
-                    onClick={() => setSelected(r)}
-                  />
-                ))}
-
-                {selected && (
-                  <InfoWindow
-                    position={{ lat: selected.lat, lng: selected.lon }}
-                    onCloseClick={() => setSelected(null)}
-                  >
-                    <div className="text-black">
-                      <div className="font-semibold">{selected.file}</div>
-                      <div>
-                        Lat: {selected.lat}, Lon: {selected.lon}
-                      </div>
-                      <div>Inst: {selected.institution}</div>
-                      <div>Date: {selected.date}</div>
-                    </div>
-                  </InfoWindow>
-                )}
-              </GoogleMap>
-            ) : (
-              <div className="h-[600px] flex items-center justify-center">
-                Loading map...
-              </div>
-            )}
-          </div>
+          {results.length >= 0 ? (
+            <MapplsMap results={results} setSelected={setSelected} />
+          ) : (
+            <div className="h-[600px] flex items-center justify-center border border-gray-700 rounded-lg">
+              No map data yet
+            </div>
+          )}
 
           <div className="text-sm text-gray-300 mt-2">
             Mapped rows: {results.length}
           </div>
 
           {/* Results Table */}
-          <div className="overflow-auto max-h-96 bg-gray-800 rounded border border-gray-700 p-2">
-            <table className="min-w-full text-left">
-              <thead className="text-gray-300">
-                <tr>
-                  <th className="px-2 py-1">#</th>
-                  <th className="px-2 py-1">lat</th>
-                  <th className="px-2 py-1">lon</th>
-                  <th className="px-2 py-1">file</th>
-                  <th className="px-2 py-1">date</th>
-                  <th className="px-2 py-1">inst</th>
-                  <th className="px-2 py-1">ocean</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((r, i) => (
-                  <tr
-                    key={i}
-                    className={`border-t border-gray-700 hover:bg-gray-700 cursor-pointer ${
-                      selected && selected.id === r.id ? "bg-gray-700" : ""
-                    }`}
-                    onClick={() => {
-                      setSelected(r);
-                      if (mapRef.current) {
-                        mapRef.current.panTo({ lat: r.lat, lng: r.lon });
-                        mapRef.current.setZoom(6);
-                      }
-                    }}
-                  >
-                    <td className="px-2 py-1 text-gray-200">{i + 1}</td>
-                    <td className="px-2 py-1">{r.lat}</td>
-                    <td className="px-2 py-1">{r.lon}</td>
-                    <td className="px-2 py-1">{r.file}</td>
-                    <td className="px-2 py-1">{r.date}</td>
-                    <td className="px-2 py-1">{r.institution}</td>
-                    <td className="px-2 py-1">{r.ocean}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {results.length > 0 && (
+            <>
+              <div className="overflow-auto max-h-96 bg-gray-800 rounded border border-gray-700 p-2">
+                <table className="min-w-full text-left">
+                  <thead className="text-gray-300">
+                    <tr>
+                      <th className="px-2 py-1">#</th>
+                      <th className="px-2 py-1">lat</th>
+                      <th className="px-2 py-1">lon</th>
+                      <th className="px-2 py-1">file</th>
+                      <th className="px-2 py-1">date</th>
+                      <th className="px-2 py-1">inst</th>
+                      <th className="px-2 py-1">ocean</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((r, i) => (
+                      <tr
+                        key={i}
+                        className={`border-t border-gray-700 hover:bg-gray-700 cursor-pointer ${
+                          selected && selected.id === r.id ? "bg-gray-700" : ""
+                        }`}
+                        onClick={() => setSelected(r)}
+                      >
+                        <td className="px-2 py-1 text-gray-200">{i + 1}</td>
+                        <td className="px-2 py-1">{r.lat}</td>
+                        <td className="px-2 py-1">{r.lon}</td>
+                        <td className="px-2 py-1">{r.file}</td>
+                        <td className="px-2 py-1">{r.date}</td>
+                        <td className="px-2 py-1">{r.institution}</td>
+                        <td className="px-2 py-1">{r.ocean}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          <div className="mt-3">
-            <button
-              onClick={downloadCSV}
-              className="px-4 py-2 bg-indigo-600 rounded hover:bg-indigo-500"
-            >
-              Download mapped points as CSV
-            </button>
-          </div>
+              <div className="mt-3">
+                <button
+                  onClick={downloadCSV}
+                  className="px-4 py-2 bg-indigo-600 rounded hover:bg-indigo-500"
+                >
+                  Download mapped points as CSV
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
