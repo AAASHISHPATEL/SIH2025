@@ -15,7 +15,7 @@ import "./SidebarLayout.css";
 import { useAuth } from "../../auth/AuthContext"; // ✅ use AuthContext
 
 const SidebarLayout = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 

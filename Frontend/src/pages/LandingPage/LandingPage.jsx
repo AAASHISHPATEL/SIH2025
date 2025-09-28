@@ -86,17 +86,20 @@ export default function LandingPage() {
 
       {/* Tagline */}
       <h1 className="fc-title">
-        Guess what? Your chats just got a new best friend—welcome to our latest
-        creation!
+        FloatChat — when the ocean speaks in ARGO data, AI translates it into
+        insights, maps, and discoveries at your fingertips.
       </h1>
 
       {/* Middle section */}
       <div className="fc-middle">
         <h2 className="fc-brand">FloatChat</h2>
         <div className="fc-card">
-          <p className="fc-card-label">Chat Platform</p>
-          <h2 className="fc-price">Free</h2>
-          <div className="fc-btn hover:bg-slate-400" onClick={handleLoginSignup}>
+          <p className="fc-card-label">Explore Ocean With</p>
+          <h2 className="fc-price">ARGO</h2>
+          <div
+            className="fc-btn hover:bg-slate-400"
+            onClick={handleLoginSignup}
+          >
             <p>Login / Signup</p>
             <div
               id="fc-toggler"
@@ -120,13 +123,13 @@ export default function LandingPage() {
       <div className="fc-blob" id="fc-mydiv" ref={draggableRef}></div>
 
       <p className="fc-disclaimer">
-        Designed & Created by SpectacledCoder | Icons by{" "}
-        <a href="https://icons8.com/" target="_blank" rel="noreferrer">
+        Designed & Created by Code Clashers | SIH2025{" "}
+        {/* <a href="https://icons8.com/" target="_blank" rel="noreferrer">
           Icons8
-        </a>{" "}
-        | SVG by{" "}
-        <a href="https://www.svgrepo.com/" target="_blank" rel="noreferrer">
-          Svg Repo
+        </a>{" "} */}
+        |{" "}
+        <a href="https://nitdgp.ac.in/" target="_blank" rel="noreferrer">
+          NIT Durgapur
         </a>
       </p>
     </div>

@@ -326,17 +326,12 @@ export default function Chat() {
       </main>
 
       {/* Sticky Input */}
-      <form
-        onSubmit={handleAsk}
-        className="sticky bottom-0 w-full bg-[#0d1b2a]  border-gray-700 p-4 flex justify-center bg-transparent z-10"
-      >
-        <div className="w-full max-w-2xl relative rounded-2xl border border-gray-700 bg-[#1b263b] p-3">
+      <form onSubmit={handleAsk} className="chat-form">
+        <div className="chat-input-wrapper">
           <textarea
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-
-              // Auto resize
               const textarea = e.target;
               textarea.style.height = "auto";
               textarea.style.height = `${textarea.scrollHeight}px`;
@@ -347,20 +342,21 @@ export default function Chat() {
                 if (query.trim()) {
                   handleAsk(e);
                   setQuery("");
-                  e.target.style.height = "auto"; // reset
+                  e.target.style.height = "auto";
                 }
               }
             }}
-            placeholder="Type your question... "
+            placeholder="Type your question..."
             rows={1}
-            className="w-full pr-16 outline-none px-3 py-2 bg-transparent text-white placeholder-gray-400 resize-none overflow-hidden whitespace-pre-wrap"
+            className="chat-textarea"
           />
+          {/* ✅ replaced text with icon */}
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="absolute bottom-3 right-3 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="chat-send-btn"
           >
-            {loading ? "…" : "Ask"}
+            <span className="chat-send-icon">➤</span>
           </button>
         </div>
       </form>
