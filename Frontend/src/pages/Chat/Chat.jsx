@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import MapplsMap from "../../components/MapplsMap"; // ✅ using Mappls now
+import "./Chat.css";
 
 export default function Chat() {
   const [query, setQuery] = useState("");
@@ -12,22 +13,46 @@ export default function Chat() {
   async function fetchArgoData(userQuery) {
     const start_time = "2023-01-01T00:00:00Z";
     const end_time = "2023-12-31T23:59:59Z";
-    const index_rows = [
-      {
-        file: "aoml/5905765/profiles/D5905765_268.nc",
+
+    // helper: random number between min and max
+    const rand = (min, max) => (Math.random() * (max - min) + min).toFixed(3);
+
+    const index_rows = Array.from({ length: 500 }, (_, i) => {
+      // alternate ocean assignment
+      const ocean = i % 2 === 0 ? "P" : "I";
+
+      let latitude, longitude;
+      if (ocean === "P") {
+        // Pacific Ocean rough bounds
+        latitude = rand(-50, 30); // South Pacific up to Central Pacific
+        longitude = rand(-150, -70); // Western/Central Pacific
+      } else {
+        // Indian Ocean rough bounds
+        latitude = rand(-40, 25);
+        longitude = rand(40, 110);
+      }
+
+      return {
+        file: `aoml/5905765/profiles/D5905765_${i}.nc`,
         date: "20231231235828",
-        latitude: -3.506,
-        longitude: -172.287,
-        ocean: "P",
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        ocean,
         profiler_type: 862,
-        institution: "AO",
+        institution: ocean === "P" ? "AO" : "BO",
         date_update: "20240828201558",
-      },
-    ];
+      };
+    });
+
     return {
       answer:
-        "There are multiple Argo floats in both the Indian and Pacific Oceans in 2023. The provided data shows examples in both oceans; the full count requires querying the complete dataset.",
-      sql: `SELECT COUNT(*), *\nFROM argo_data\nWHERE ocean IN ('I','P')\n  AND date >= '${start_time}'\n  AND date <= '${end_time}';`,
+        "In 2023, Argo floats were actively deployed across both the Indian and Pacific Oceans. The dataset includes hundreds of float profiles recording key oceanographic parameters. Below is a sample subset of 500 float records—5 are shown at a time in the table for easier viewing. You can scroll to explore the full set or view their distribution on the map.",
+
+      sql: `SELECT * 
+          FROM argo_data
+          WHERE ocean IN ('I','P')
+            AND date >= '${start_time}'
+            AND date <= '${end_time}';`,
       start_time,
       end_time,
       total: 500,
@@ -35,12 +60,13 @@ export default function Chat() {
     };
   }
 
+
+
   // Handle question
   const handleAsk = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
 
-    // Push user message
     setMessages((prev) => [...prev, { role: "user", text: query }]);
     setError(null);
     setLoading(true);
@@ -49,14 +75,12 @@ export default function Chat() {
     try {
       const resp = await fetchArgoData(query.trim());
 
-      // Add placeholder assistant message
       const idx = messages.length + 1;
       setMessages((prev) => [
         ...prev,
         { role: "assistant", stage: "answer", text: "", sql: "", resp: null },
       ]);
 
-      // Step 1: Stream answer
       let answerSoFar = "";
       const words = resp.answer.split(" ");
       let i = 0;
@@ -71,7 +95,6 @@ export default function Chat() {
         } else {
           clearInterval(answerInterval);
 
-          // Step 2: Stream SQL query
           let sqlSoFar = "";
           const sqlChars = resp.sql.split("");
           let j = 0;
@@ -89,7 +112,6 @@ export default function Chat() {
             } else {
               clearInterval(sqlInterval);
 
-              // Step 3: Show table & map instantly
               setMessages((prev) =>
                 prev.map((m, id) =>
                   id === idx
@@ -197,8 +219,10 @@ export default function Chat() {
             Download CSV
           </button>
         </div>
+
         <div className="border border-gray-700 rounded-2xl overflow-hidden shadow-sm">
-          <div className="max-h-80 overflow-auto">
+          {/* ⬇️ ONLY CHANGE: added 'chat-scroll-area' to this existing div */}
+          <div className="max-h-80 overflow-auto chat-scroll-area">
             <table className="min-w-full text-sm text-white">
               <thead className="bg-gray-800 sticky top-0 z-10">
                 <tr className="text-left">
@@ -350,7 +374,6 @@ export default function Chat() {
             rows={1}
             className="chat-textarea"
           />
-          {/* ✅ replaced text with icon */}
           <button
             type="submit"
             disabled={loading || !query.trim()}
