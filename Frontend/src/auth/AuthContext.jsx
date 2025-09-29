@@ -4,7 +4,7 @@ import axios from "axios";
 
 // --- Configure axios ---
 axios.defaults.withCredentials = true; // send cookies
-axios.defaults.baseURL = "http://localhost:3000"; // ✅ backend base URL
+axios.defaults.baseURL = "http://localhost:3000"; // set your backend URL here
 
 const AuthContext = createContext();
 
