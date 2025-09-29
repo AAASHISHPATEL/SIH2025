@@ -243,7 +243,7 @@
 /* Page content */
 .sidebar-content {
   flex: 1;
-  background: var(--sidebar-content-bg);
+  /* background: var(--sidebar-content-bg); */
   padding: 0;
   margin: 0;
   min-height: calc(100vh - 60px);

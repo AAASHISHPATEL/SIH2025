@@ -9,13 +9,24 @@ export default function ExploreIndex() {
   const [lonMax, setLonMax] = useState(87.3);
   const [ocean, setOcean] = useState("");
   const [institution, setInstitution] = useState("");
+
+  // Separate date & time states
   const [dateFrom, setDateFrom] = useState("");
+  const [timeFrom, setTimeFrom] = useState("000000"); // default
   const [dateTo, setDateTo] = useState("");
+  const [timeTo, setTimeTo] = useState("000000"); // default
+
   const [limit, setLimit] = useState();
 
   // Results & selection
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
+
+  // Combine date+time into YYYYMMDDHHMMSS
+  const formatDateTime = (date, time) => {
+    if (!date) return "";
+    return `${date}${time || "000000"}`;
+  };
 
   // Dummy fetch — replace with real API call
   const fetchNearest = () => {
@@ -25,15 +36,21 @@ export default function ExploreIndex() {
     const lonMinNum = Number(lonMin);
     const lonMaxNum = Number(lonMax);
 
+    const combinedFrom = formatDateTime(dateFrom, timeFrom);
+    const combinedTo = formatDateTime(dateTo, timeTo);
+
     const data = Array.from({ length: n }, (_, i) => ({
       id: i + 1,
       lat: +(latMinNum + Math.random() * (latMaxNum - latMinNum)).toFixed(5),
       lon: +(lonMinNum + Math.random() * (lonMaxNum - lonMinNum)).toFixed(5),
       file: `csio/profile_${String(i + 1).padStart(3, "0")}.nc`,
-      date: dateFrom || `202012${(i + 1).toString().padStart(2, "0")}000000`,
+      date:
+        combinedFrom || `202012${(i + 1).toString().padStart(2, "0")}000000`, // fallback dummy
       institution: institution || ["IN", "HZ", "AO"][i % 3],
       ocean: ocean || "A",
     }));
+
+    console.log("Query range:", combinedFrom, "→", combinedTo);
 
     setResults(data);
     setSelected(null);
@@ -59,7 +76,7 @@ export default function ExploreIndex() {
   };
 
   return (
-    <div className="min-h-screen text-white p-6">
+    <div className="min-h-screen text-white p-6 bg-[#0d1b2a]">
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-semibold">
           Explore ARGO Index (SQLite/Postgres)
@@ -156,26 +173,44 @@ export default function ExploreIndex() {
 
             {/* date_from */}
             <label className="flex flex-col text-sm">
-              <span className="text-gray-300 mb-1">
-                date_from (YYYYMMDDHHMMSS)
-              </span>
+              <span className="text-gray-300 mb-1">date_from (YYYYMMDD)</span>
               <input
                 type="text"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
+                placeholder="YYYYMMDD"
+                className="p-2 rounded bg-gray-700 border border-gray-600"
+              />
+            </label>
+            <label className="flex flex-col text-sm">
+              <span className="text-gray-300 mb-1">time_from (HHMMSS)</span>
+              <input
+                type="text"
+                value={timeFrom}
+                onChange={(e) => setTimeFrom(e.target.value)}
+                placeholder="HHMMSS"
                 className="p-2 rounded bg-gray-700 border border-gray-600"
               />
             </label>
 
             {/* date_to */}
             <label className="flex flex-col text-sm">
-              <span className="text-gray-300 mb-1">
-                date_to (YYYYMMDDHHMMSS)
-              </span>
+              <span className="text-gray-300 mb-1">date_to (YYYYMMDD)</span>
               <input
                 type="text"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
+                placeholder="YYYYMMDD"
+                className="p-2 rounded bg-gray-700 border border-gray-600"
+              />
+            </label>
+            <label className="flex flex-col text-sm">
+              <span className="text-gray-300 mb-1">time_to (HHMMSS)</span>
+              <input
+                type="text"
+                value={timeTo}
+                onChange={(e) => setTimeTo(e.target.value)}
+                placeholder="HHMMSS"
                 className="p-2 rounded bg-gray-700 border border-gray-600"
               />
             </label>

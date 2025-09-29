@@ -1,0 +1,115 @@
+/* Container */
+.tac-container {
+  min-height: 100vh;
+  background-color: #111827; /* Dark gray */
+  color: white;
+  padding: 1.5rem;
+}
+
+.tac-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.tac-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Card */
+.tac-card {
+  background-color: #1f2937;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Inputs */
+.tac-input {
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.tac-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #d1d5db;
+}
+
+/* Table */
+.tac-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tac-table th,
+.tac-table td {
+  border: 1px solid #374151;
+  padding: 0.5rem;
+  text-align: left;
+}
+.tac-table th {
+  background-color: #374151;
+  color: #d1d5db;
+}
+.tac-table tr:nth-child(even) {
+  background-color: #2d3748;
+}
+
+/* Charts grid */
+.tac-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* React Select Dark Mode */
+.tac-select__control {
+  background-color: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
+  color: white !important;
+}
+.tac-select__menu {
+  background-color: #1f2937 !important;
+}
+.tac-select__option {
+  background-color: #1f2937 !important;
+  color: white !important;
+}
+.tac-select__option--is-focused {
+  background-color: #374151 !important;
+}
+.tac-select__option--is-selected {
+  background-color: #3b82f6 !important;
+}
+.tac-select__multi-value {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+.tac-select__multi-value__label {
+  color: white !important;
+}
+.tac-select__multi-value__remove:hover {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.tac-map-wrapper {
+  height: 600px;  /* map always same height */
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.tac-map {
+  width: 100%;
+  height: 100%;
+}
