@@ -4,7 +4,7 @@ import axios from "axios";
 
 // --- Configure axios ---
 axios.defaults.withCredentials = true; // send cookies
-axios.defaults.baseURL = "http://localhost:3000"; // set your backend URL here
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL; // ✅ your backend URL
 
 const AuthContext = createContext();
 
