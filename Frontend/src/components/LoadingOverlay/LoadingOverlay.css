@@ -14,7 +14,7 @@
   .overlay .spinner:after {
     border: 10px solid rgba(0, 0, 0, 0);
     border-top: 10px solid white;
-    border-bottom: 10px solid red;
+    border-bottom: 10px solid #512da8;
     border-radius: 50px;
     position: absolute;
     top: 50%;

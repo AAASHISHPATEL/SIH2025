@@ -13,6 +13,7 @@ import SignUpSignIn from "./pages/SignUpSignIn/SignUpSignIn";
 import SidebarLayout from "./components/SideBarLayout/SidebarLayout";
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import Profile from "./pages/Profile/Profile";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
               element={<TrajectoryComparison />}
             />
           </Route>
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </AuthProvider>

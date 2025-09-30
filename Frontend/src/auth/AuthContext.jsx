@@ -2,29 +2,30 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// --- Configure axios ---
-axios.defaults.withCredentials = true; // send cookies
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL; // ✅ your backend URL
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // ✅ single loading state
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
-  // Restore session if cookie/token exists
-  
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const { data } = await axios.get("/users/profile"); // ✅ change here
+        const { data } = await axios.get("/users/profile");
+        console.log("Profile API response:", data);
         if (mounted) setUser(data.user);
-      } catch {
+      } catch (err) {
+        console.error("Profile fetch error:", err);
         if (mounted) setUser(null);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setAuthLoading(false); // ✅ use correct state
       }
     })();
     return () => {
@@ -32,33 +33,47 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Sign in
   const login = async (credentials) => {
-    const { data } = await axios.post("/users/login", credentials); // ✅ match backend
-    setUser(data.user);
-    return data.user;
+    setAuthSubmitting(true);
+    try {
+      const { data } = await axios.post("/users/login", credentials);
+      setUser(data.user);
+      return data.user;
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
-  // Sign up
   const register = async (payload) => {
-    const { data } = await axios.post("/users/register", payload); // ✅ match backend
-    setUser(data.user);
-    return data.user;
+    setAuthSubmitting(true);
+    try {
+      const { data } = await axios.post("/users/register", payload);
+      setUser(data.user);
+      return data.user;
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
-  // Logout
   const logout = async () => {
     try {
-      await axios.get("/users/logout"); // ✅ your backend defines it as GET
+      await axios.get("/users/logout");
     } catch {}
     setUser(null);
-    navigate("/", { replace: true });
+    navigate("/login", { replace: true });
   };
-
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, login, register, logout, loading }}
+      value={{
+        user,
+        setUser,
+        login,
+        register,
+        logout,
+        authLoading,
+        authSubmitting,
+      }}
     >
       {children}
     </AuthContext.Provider>

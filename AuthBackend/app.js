@@ -13,9 +13,10 @@ const app = express();
 app.use(
   cors({
     origin: "https://floatchat-omega.vercel.app", // ✅ must be your frontend origin
+    // origin: "http://localhost:5173",
     credentials: true, // ✅ allow cookies
   })
-);
+); 
 
 app.use(morgan('dev')); // Logging middleware
 app.use(express.json());

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import "./SidebarLayout.css";
 import { useAuth } from "../../auth/AuthContext"; // ✅ use AuthContext
+import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 
 const SidebarLayout = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -23,7 +24,7 @@ const SidebarLayout = () => {
   const profileRef = useRef(null);
   const navigate = useNavigate();
 
-  const { user, logout } = useAuth(); // ✅ real user + logout from context
+  const { user, logout, authLoading ,authSubmitting} = useAuth(); // ✅ real user + logout from context
 
   // Close sidebar + profile menu when clicking outside
   useEffect(() => {
@@ -252,7 +253,15 @@ const SidebarLayout = () => {
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <User />
-              <span>{user?.name || "Guest"}</span>
+              {authLoading ? (
+                <LoadingOverlay label="Restoring session..." />
+              ) : authSubmitting ? (
+                <LoadingOverlay label="Signing in..." />
+              ) : user ? (
+                <span>{user.name}</span>
+              ) : (
+                <span>Guest</span>
+              )}
             </button>
             {menuOpen && (
               <div className="sidebar-profile-menu">

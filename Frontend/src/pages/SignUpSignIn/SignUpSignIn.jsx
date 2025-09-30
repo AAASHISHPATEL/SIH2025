@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./LoginSignup.css";
 import { useAuth } from "../../auth/AuthContext";
+import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay"; // ✅ adjust path
 
 export default function SignUpSignIn() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register } = useAuth();
+  const { login, register, authSubmitting } = useAuth(); // ✅ added authSubmitting
 
   const [signupData, setSignupData] = useState({
     name: "",
@@ -77,6 +78,9 @@ export default function SignUpSignIn() {
 
   return (
     <div className="loginSignup-body">
+      {/* ✅ Overlay shown when submitting */}
+      {authSubmitting && <LoadingOverlay label="Please wait..." />}
+
       <div className="loginSignup-container" id="loginSignup-container">
         {/* Sign Up */}
         <div className="loginSignup-form-container loginSignup-sign-up">

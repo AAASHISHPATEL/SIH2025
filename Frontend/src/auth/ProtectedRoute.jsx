@@ -1,11 +1,14 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import LoadingOverlay from "../components/LoadingOverlay/LoadingOverlay";
 
 export default function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, authLoading } = useAuth();
   const location = useLocation();
 
-  if (loading) return null; // spinner optional
+  if (authLoading) {
+    return <LoadingOverlay label="Restoring session..." />; // ✅ global overlay on refresh
+  }
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
