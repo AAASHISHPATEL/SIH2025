@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import MapplsMap from "../../components/MapplsMap";
 import "./Chat.css";
 
@@ -9,10 +12,32 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [showMap, setShowMap] = useState(false);
 
-  // Call your real RAG backend
-  async function fetchRagData(userQuery) {
+  // ✅ Extract lat/lon pairs from RAG answers
+  function extractLocations(answerText) {
+    if (!answerText || typeof answerText !== "string") return [];
+    const regex = /Location:\s*\(([-+]?\d*\.?\d+),\s*([-+]?\d*\.?\d+)\)/g;
+    let match;
+    const results = [];
+    while ((match = regex.exec(answerText)) !== null) {
+      const lat = parseFloat(match[1]);
+      const lon = parseFloat(match[2]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        results.push({
+          lat,
+          lon,
+          label: `Lat: ${lat}, Lon: ${lon}`,
+        });
+      }
+    }
+    console.log("Extracted locations:", results);
+    return results;
+    
+  }
+
+  // ✅ Call real RAG backend
+  const fetchRagData = useCallback(async (userQuery) => {
     const resp = await fetch(
-      `${import.meta.env.VITE_ARGO_BACKEND_BASE_URL}/query/`,
+      "https://argo-backend-service.onrender.com/query/ask/",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -20,37 +45,46 @@ export default function Chat() {
       }
     );
 
-    if (!resp.ok) throw new Error("API request failed");
-    return await resp.json();
-  }
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(
+        `API request failed with status ${resp.status}: ${errorText}`
+      );
+    }
+    const data = await resp.json();
+    console.log("RAG response:", data);
+    return data;
+  }, []);
 
-  // Handle chat input
+  // ✅ Handle chat input
   const handleAsk = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
 
-    setMessages((prev) => [...prev, { role: "user", text: query }]);
+    const userQuery = query.trim();
+    setMessages((prev) => [...prev, { role: "user", text: userQuery }]);
     setError(null);
     setLoading(true);
     setShowMap(false);
 
-    try {
-      const resp = await fetchRagData(query.trim());
+    const newAssistantMessageIndex = messages.length + 1;
+    setQuery("");
 
-      const idx = messages.length + 1;
+    try {
+      const resp = await fetchRagData(userQuery);
+
       setMessages((prev) => [
         ...prev,
         { role: "assistant", stage: "answer", text: "", sql: "", resp: null },
       ]);
 
-      // Decide: use RAG or fallback to SQL
       const finalAnswer =
-        resp?.rag_output && resp.rag_output.trim().length > 0
-          ? resp.rag_output
+        resp?.answer && resp.answer.trim().length > 0
+          ? resp.answer
           : "RAG retrieval failed. Showing SQL result instead.";
       const finalSql = resp?.sql_query || "";
 
-      // Typing animation for answer
+      // --- Typing animation for answer ---
       let answerSoFar = "";
       const words = finalAnswer.split(" ");
       let i = 0;
@@ -59,39 +93,50 @@ export default function Chat() {
         if (i < words.length) {
           answerSoFar += words[i] + " ";
           setMessages((prev) =>
-            prev.map((m, id) => (id === idx ? { ...m, text: answerSoFar } : m))
+            prev.map((m, id) =>
+              id === newAssistantMessageIndex ? { ...m, text: answerSoFar } : m
+            )
           );
           i++;
         } else {
           clearInterval(answerInterval);
 
-          // Then animate SQL if available
+          // --- Animate SQL ---
           let sqlSoFar = "";
           const sqlChars = finalSql.split("");
           let j = 0;
+
           setMessages((prev) =>
-            prev.map((m, id) => (id === idx ? { ...m, stage: "sql" } : m))
+            prev.map((m, id) =>
+              id === newAssistantMessageIndex ? { ...m, stage: "sql" } : m
+            )
           );
 
           const sqlInterval = setInterval(() => {
             if (j < sqlChars.length) {
               sqlSoFar += sqlChars[j];
               setMessages((prev) =>
-                prev.map((m, id) => (id === idx ? { ...m, sql: sqlSoFar } : m))
+                prev.map((m, id) =>
+                  id === newAssistantMessageIndex ? { ...m, sql: sqlSoFar } : m
+                )
               );
               j++;
             } else {
               clearInterval(sqlInterval);
 
+              // --- Final update with extracted locations ---
               setMessages((prev) =>
                 prev.map((m, id) =>
-                  id === idx
+                  id === newAssistantMessageIndex
                     ? {
                         role: "assistant",
                         stage: "done",
                         text: finalAnswer,
                         sql: finalSql,
-                        resp,
+                        resp: {
+                          ...resp,
+                          rag_locations: extractLocations(finalAnswer),
+                        },
                       }
                     : m
                 )
@@ -102,43 +147,31 @@ export default function Chat() {
       }, 50);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch data.");
+      setError(err.message || "Failed to fetch data.");
     } finally {
       setLoading(false);
-      setQuery("");
     }
   };
 
-  // Helpers
-  const splitDateTime = (raw) => {
-    if (!raw) return { d: "", t: "" };
-    const iso = /T/.test(raw)
-      ? raw
-      : `${raw.substring(0, 4)}-${raw.substring(4, 6)}-${raw.substring(
-          6,
-          8
-        )}T${raw.substring(8, 10)}:${raw.substring(10, 12)}:${raw.substring(
-          12,
-          14
-        )}Z`;
-    const dt = new Date(iso);
-    if (isNaN(dt.getTime())) return { d: raw, t: "" };
-    const pad = (n) => n.toString().padStart(2, "0");
-    return {
-      d: `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(
-        dt.getUTCDate()
-      )}`,
-      t: `${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:${pad(
-        dt.getUTCSeconds()
-      )}Z`,
-    };
-  };
-
+  // ✅ CSV Download
   const downloadCsv = (resp) => {
     if (!resp?.sql_rows?.length) return;
     const headers = Object.keys(resp.sql_rows[0]);
-    const rows = resp.sql_rows.map((r) => headers.map((h) => r[h]));
-    const csv = [headers.join(","), ...rows.map((a) => a.join(","))].join("\n");
+
+    const rows = resp.sql_rows.map((r) =>
+      headers
+        .map((h) => {
+          const val = r[h] == null ? "" : String(r[h]);
+          return `"${val.replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+
+    const BOM = "\uFEFF";
+    const csv = [BOM, headers.map((h) => `"${h}"`).join(","), ...rows].join(
+      "\n"
+    );
+
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -150,6 +183,7 @@ export default function Chat() {
     URL.revokeObjectURL(url);
   };
 
+  // ✅ Render SQL Table
   const renderTable = (resp) => {
     if (!resp?.sql_rows?.length) return null;
     const headers = Object.keys(resp.sql_rows[0]);
@@ -184,7 +218,7 @@ export default function Chat() {
                   <tr key={i} className="odd:bg-gray-900 even:bg-gray-800">
                     {headers.map((h) => (
                       <td key={h} className="px-4 py-2">
-                        {row[h]}
+                        {row[h] == null ? "" : row[h]}
                       </td>
                     ))}
                   </tr>
@@ -243,7 +277,27 @@ export default function Chat() {
               key={idx}
               className="bg-[#1b263b] border border-gray-700 rounded-2xl p-5 space-y-4"
             >
-              <div>{m.text}</div>
+              {/* ✅ Markdown rendering for rich answers */}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  p: ({ node, ...props }) => (
+                    <p className="mb-2 leading-relaxed" {...props} />
+                  ),
+                  code: ({ node, inline, ...props }) =>
+                    inline ? (
+                      <code className="bg-gray-800 px-1 rounded" {...props} />
+                    ) : (
+                      <pre className="bg-gray-900 p-3 rounded-xl overflow-x-auto text-sm">
+                        <code {...props} />
+                      </pre>
+                    ),
+                }}
+              >
+                {m.text}
+              </ReactMarkdown>
+
               {m.sql && (
                 <div>
                   <div className="text-sm text-gray-400 mb-2">SQL query</div>
@@ -252,8 +306,12 @@ export default function Chat() {
                   </pre>
                 </div>
               )}
+
               {renderTable(m.resp)}
-              {resp?.sql_rows?.length > 0 && (
+
+              {/* ✅ Show map if SQL rows OR RAG locations exist */}
+              {(m.resp?.sql_rows?.length > 0 ||
+                (m.resp?.rag_locations && m.resp.rag_locations.length > 0)) && (
                 <div>
                   <button
                     onClick={() => setShowMap((s) => !s)}
@@ -264,12 +322,21 @@ export default function Chat() {
                   {showMap && (
                     <div className="mt-4 h-[420px] rounded-xl overflow-hidden">
                       <MapplsMap
-                        results={m.resp.sql_rows.map((r, i) => ({
-                          id: i + 1,
-                          lat: r.latitude,
-                          lon: r.longitude,
-                          ...r,
-                        }))}
+                        results={
+                          m.resp.sql_rows?.length > 0
+                            ? m.resp.sql_rows.map((r, i) => ({
+                                id: i + 1,
+                                lat: r.latitude,
+                                lon: r.longitude,
+                                ...r,
+                              }))
+                            : m.resp.rag_locations.map((loc, i) => ({
+                                id: i + 1,
+                                lat: loc.lat,
+                                lon: loc.lon,
+                                file: loc.label,
+                              }))
+                        }
                       />
                     </div>
                   )}
@@ -303,7 +370,6 @@ export default function Chat() {
                 e.preventDefault();
                 if (query.trim()) {
                   handleAsk(e);
-                  setQuery("");
                   e.target.style.height = "auto";
                 }
               }
