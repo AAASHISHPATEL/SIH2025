@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import MapplsMap from "../../components/MapplsMap"; // ✅ using Mappls now
+import MapplsMap from "../../components/MapplsMap";
 import "./Chat.css";
 
 export default function Chat() {
@@ -9,60 +9,22 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [showMap, setShowMap] = useState(false);
 
-  // Mock API
-  async function fetchArgoData(userQuery) {
-    const start_time = "2023-01-01T00:00:00Z";
-    const end_time = "2023-12-31T23:59:59Z";
-
-    // helper: random number between min and max
-    const rand = (min, max) => (Math.random() * (max - min) + min).toFixed(3);
-
-    const index_rows = Array.from({ length: 500 }, (_, i) => {
-      // alternate ocean assignment
-      const ocean = i % 2 === 0 ? "P" : "I";
-
-      let latitude, longitude;
-      if (ocean === "P") {
-        // Pacific Ocean rough bounds
-        latitude = rand(-50, 30); // South Pacific up to Central Pacific
-        longitude = rand(-150, -70); // Western/Central Pacific
-      } else {
-        // Indian Ocean rough bounds
-        latitude = rand(-40, 25);
-        longitude = rand(40, 110);
+  // Call your real RAG backend
+  async function fetchRagData(userQuery) {
+    const resp = await fetch(
+      `${import.meta.env.VITE_ARGO_BACKEND_BASE_URL}/query/`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userQuery }),
       }
+    );
 
-      return {
-        file: `aoml/5905765/profiles/D5905765_${i}.nc`,
-        date: "20231231235828",
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        ocean,
-        profiler_type: 862,
-        institution: ocean === "P" ? "AO" : "BO",
-        date_update: "20240828201558",
-      };
-    });
-
-    return {
-      answer:
-        "In 2023, Argo floats were actively deployed across both the Indian and Pacific Oceans. The dataset includes hundreds of float profiles recording key oceanographic parameters. Below is a sample subset of 500 float records—5 are shown at a time in the table for easier viewing. You can scroll to explore the full set or view their distribution on the map.",
-
-      sql: `SELECT * 
-          FROM argo_data
-          WHERE ocean IN ('I','P')
-            AND date >= '${start_time}'
-            AND date <= '${end_time}';`,
-      start_time,
-      end_time,
-      total: 500,
-      index_rows,
-    };
+    if (!resp.ok) throw new Error("API request failed");
+    return await resp.json();
   }
 
-
-
-  // Handle question
+  // Handle chat input
   const handleAsk = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -73,7 +35,7 @@ export default function Chat() {
     setShowMap(false);
 
     try {
-      const resp = await fetchArgoData(query.trim());
+      const resp = await fetchRagData(query.trim());
 
       const idx = messages.length + 1;
       setMessages((prev) => [
@@ -81,8 +43,16 @@ export default function Chat() {
         { role: "assistant", stage: "answer", text: "", sql: "", resp: null },
       ]);
 
+      // Decide: use RAG or fallback to SQL
+      const finalAnswer =
+        resp?.rag_output && resp.rag_output.trim().length > 0
+          ? resp.rag_output
+          : "RAG retrieval failed. Showing SQL result instead.";
+      const finalSql = resp?.sql_query || "";
+
+      // Typing animation for answer
       let answerSoFar = "";
-      const words = resp.answer.split(" ");
+      const words = finalAnswer.split(" ");
       let i = 0;
 
       const answerInterval = setInterval(() => {
@@ -95,8 +65,9 @@ export default function Chat() {
         } else {
           clearInterval(answerInterval);
 
+          // Then animate SQL if available
           let sqlSoFar = "";
-          const sqlChars = resp.sql.split("");
+          const sqlChars = finalSql.split("");
           let j = 0;
           setMessages((prev) =>
             prev.map((m, id) => (id === idx ? { ...m, stage: "sql" } : m))
@@ -118,8 +89,8 @@ export default function Chat() {
                     ? {
                         role: "assistant",
                         stage: "done",
-                        text: resp.answer,
-                        sql: resp.sql,
+                        text: finalAnswer,
+                        sql: finalSql,
                         resp,
                       }
                     : m
@@ -130,6 +101,7 @@ export default function Chat() {
         }
       }, 50);
     } catch (err) {
+      console.error(err);
       setError("Failed to fetch data.");
     } finally {
       setLoading(false);
@@ -163,41 +135,15 @@ export default function Chat() {
   };
 
   const downloadCsv = (resp) => {
-    if (!resp?.index_rows?.length) return;
-    const headers = [
-      "file",
-      "date",
-      "time",
-      "latitude",
-      "longitude",
-      "ocean",
-      "profiler_type",
-      "institution",
-      "date_update",
-      "time_update",
-    ];
-    const rows = resp.index_rows.map((r) => {
-      const d1 = splitDateTime(r.date);
-      const d2 = splitDateTime(r.date_update);
-      return [
-        r.file,
-        d1.d,
-        d1.t,
-        r.latitude,
-        r.longitude,
-        r.ocean,
-        r.profiler_type,
-        r.institution,
-        d2.d,
-        d2.t,
-      ];
-    });
+    if (!resp?.sql_rows?.length) return;
+    const headers = Object.keys(resp.sql_rows[0]);
+    const rows = resp.sql_rows.map((r) => headers.map((h) => r[h]));
     const csv = [headers.join(","), ...rows.map((a) => a.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "index_rows.csv";
+    a.download = "sql_results.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -205,12 +151,13 @@ export default function Chat() {
   };
 
   const renderTable = (resp) => {
-    if (!resp?.index_rows?.length) return null;
+    if (!resp?.sql_rows?.length) return null;
+    const headers = Object.keys(resp.sql_rows[0]);
     return (
       <div className="mt-4 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm text-gray-400">
-            Showing {resp.index_rows.length} of {resp.total} results
+            Showing {resp.sql_rows.length} SQL results
           </div>
           <button
             onClick={() => downloadCsv(resp)}
@@ -221,37 +168,27 @@ export default function Chat() {
         </div>
 
         <div className="border border-gray-700 rounded-2xl overflow-hidden shadow-sm">
-          {/* ⬇️ ONLY CHANGE: added 'chat-scroll-area' to this existing div */}
           <div className="max-h-80 overflow-auto chat-scroll-area">
             <table className="min-w-full text-sm text-white">
               <thead className="bg-gray-800 sticky top-0 z-10">
                 <tr className="text-left">
-                  <th className="px-4 py-2">File</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Time</th>
-                  <th className="px-4 py-2">Lat</th>
-                  <th className="px-4 py-2">Lon</th>
-                  <th className="px-4 py-2">Ocean</th>
-                  <th className="px-4 py-2">Profiler</th>
-                  <th className="px-4 py-2">Institution</th>
+                  {headers.map((h) => (
+                    <th key={h} className="px-4 py-2">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {resp.index_rows.map((r, i) => {
-                  const d1 = splitDateTime(r.date);
-                  return (
-                    <tr key={i} className="odd:bg-gray-900 even:bg-gray-800">
-                      <td className="px-4 py-2">{r.file}</td>
-                      <td className="px-4 py-2">{d1.d}</td>
-                      <td className="px-4 py-2">{d1.t}</td>
-                      <td className="px-4 py-2">{r.latitude}</td>
-                      <td className="px-4 py-2">{r.longitude}</td>
-                      <td className="px-4 py-2">{r.ocean}</td>
-                      <td className="px-4 py-2">{r.profiler_type}</td>
-                      <td className="px-4 py-2">{r.institution}</td>
-                    </tr>
-                  );
-                })}
+                {resp.sql_rows.map((row, i) => (
+                  <tr key={i} className="odd:bg-gray-900 even:bg-gray-800">
+                    {headers.map((h) => (
+                      <td key={h} className="px-4 py-2">
+                        {row[h]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -262,9 +199,9 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-[#0d1b2a] flex flex-col text-white">
-      <main className="flex-1  overflow-y-auto px-4 py-6 max-w-5xl w-full mx-auto space-y-6 pb-32">
+      <main className="flex-1 overflow-y-auto px-4 py-6 max-w-5xl w-full mx-auto space-y-6 pb-32">
         {messages.length === 0 && !loading && !error && (
-          <div className="h-full mt-56   flex flex-col items-center justify-center text-center space-y-3">
+          <div className="h-full mt-56 flex flex-col items-center justify-center text-center space-y-3">
             <h1 className="text-5xl font-bold mb-2 opacity-0 animate-fadeUp [animation-delay:0.2s]">
               Welcome to <span className="text-blue-400">FloatChat</span>
             </h1>
@@ -306,37 +243,38 @@ export default function Chat() {
               key={idx}
               className="bg-[#1b263b] border border-gray-700 rounded-2xl p-5 space-y-4"
             >
-              <div>{m.resp.answer}</div>
-              <div>
-                <div className="text-sm text-gray-400 mb-2">SQL query</div>
-                <pre className="bg-[#0d1b2a] p-4 rounded-xl overflow-auto text-sm">
-                  <code>{m.resp.sql}</code>
-                </pre>
-              </div>
+              <div>{m.text}</div>
+              {m.sql && (
+                <div>
+                  <div className="text-sm text-gray-400 mb-2">SQL query</div>
+                  <pre className="bg-[#0d1b2a] p-4 rounded-xl overflow-auto text-sm">
+                    <code>{m.sql}</code>
+                  </pre>
+                </div>
+              )}
               {renderTable(m.resp)}
-              <div>
-                <button
-                  onClick={() => setShowMap((s) => !s)}
-                  className="px-3 py-1.5 rounded-xl text-sm bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  {showMap ? "Hide Map" : "Show Map"}
-                </button>
-                {showMap && m.resp.index_rows?.length > 0 && (
-                  <div className="mt-4 h-[420px] rounded-xl overflow-hidden">
-                    <MapplsMap
-                      results={m.resp.index_rows.map((r, i) => ({
-                        id: i + 1,
-                        lat: r.latitude,
-                        lon: r.longitude,
-                        file: r.file,
-                        date: r.date,
-                        institution: r.institution,
-                        ocean: r.ocean,
-                      }))}
-                    />
-                  </div>
-                )}
-              </div>
+              {resp?.sql_rows?.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowMap((s) => !s)}
+                    className="px-3 py-1.5 rounded-xl text-sm bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {showMap ? "Hide Map" : "Show Map"}
+                  </button>
+                  {showMap && (
+                    <div className="mt-4 h-[420px] rounded-xl overflow-hidden">
+                      <MapplsMap
+                        results={m.resp.sql_rows.map((r, i) => ({
+                          id: i + 1,
+                          lat: r.latitude,
+                          lon: r.longitude,
+                          ...r,
+                        }))}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )
         )}

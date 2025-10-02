@@ -4,7 +4,7 @@ import NearestARGO from "./pages/NearestARGO/NearestARGO";
 import TrajectoryComparison from "./pages/Tragectory&Comparison/TrajectoryAndComparison";
 import ExploreIndex from "./pages/ExploreIndex/ExploreIndex";
 import Chat from "./pages/Chat/Chat";
-import Export from "./pages/Export/Export";
+// import Export from "./pages/Export/Export";
 import Ingest from "./pages/Ingest/Ingest";
 import LandingPage from "./pages/LandingPage/LandingPage";
 import LandingLayout from "./Layouts/LandingLayout";
@@ -41,7 +41,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<SidebarLayout />}>
             <Route path="/NearestARGO" element={<NearestARGO />} />
-            <Route path="/Export" element={<Export />} />
+            {/* <Route path="/Export" element={<Export />} /> */}
             <Route path="/Ingest" element={<Ingest />} />
             <Route path="/ExploreIndex" element={<ExploreIndex />} />
             <Route path="/Chat" element={<Chat />} />
@@ -49,8 +49,8 @@ function App() {
               path="/Trajectory&Comparison"
               element={<TrajectoryComparison />}
             />
+            <Route path="/profile" element={<Profile />} />
           </Route>
-          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </AuthProvider>

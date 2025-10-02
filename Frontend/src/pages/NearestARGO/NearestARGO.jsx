@@ -2,9 +2,10 @@ import { useState } from "react";
 import MapplsMap from "../../components/MapplsMap";
 
 export default function NearestARGO() {
-  const [lat, setLat] = useState();
-  const [lon, setLon] = useState();
-  const [limit, setLimit] = useState();
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [limit, setLimit] = useState("");
+  const [radius, setRadius] = useState(""); 
 
   const [place, setPlace] = useState("");
   const [year, setYear] = useState("");
@@ -13,27 +14,78 @@ export default function NearestARGO() {
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  const fetchNearest = () => {
-    const n = Math.max(1, Number(limit) || 10);
-    const baseLat = Number(lat) || 0;
-    const baseLon = Number(lon) || 0;
+  const fetchNearest = async () => {
+    // Basic validation for coordinate-based search
+    if ((lat && !lon) || (!lat && lon)) {
+      alert("Please enter both Latitude and Longitude.");
+      return;
+    }
 
-    const data = Array.from({ length: n }, (_, i) => ({
-      id: i + 1,
-      lat: +(baseLat + (Math.random() - 0.5) * 6).toFixed(5),
-      lon: +(baseLon + (Math.random() - 0.5) * 6).toFixed(5),
-      file: `csio/profile_${String(i + 1).padStart(3, "0")}.nc`,
-      date: `2021${(i + 1).toString().padStart(2, "0")}150000`,
-      institution: ["IN", "HZ", "AO"][i % 3],
-      ocean: "I",
-    }));
+    try {
+      // Prepare the body for the POST request
+      const body = {
+        // Core search parameters: lat, lon, radius, and limit
+        latitude: lat ? Number(lat) : undefined,
+        longitude: lon ? Number(lon) : undefined,
+        radius: radius ? Number(radius) : undefined, 
+        limit: limit ? Number(limit) : undefined, 
+        
+        // Place and time filters
+        ocean_name: place || undefined,
+        start_date: year ? `${year}-01-01` : undefined,
+        end_date: year ? `${year}-12-31` : undefined,
+        institution: institution || undefined,
+        
+        // *min_lat and max_lat are removed as requested*
+      };
 
-    setResults(data);
-    setSelected(null);
+      // Clean up body by removing undefined values to send a cleaner JSON payload
+      const payload = Object.fromEntries(
+        Object.entries(body).filter(([, v]) => v !== undefined)
+      );
+      
+      console.log("Sending payload:", payload);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_ARGO_BACKEND_BASE_URL}/sql-query/nearest-argo/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload), // Send the cleaned JSON payload
+        }
+      );
+
+      const data = await res.json();
+      if (data.error) {
+        console.error("API Error:", data.error);
+        alert(`API Error: ${data.error}`);
+        return;
+      }
+
+      setResults(
+        data.results.map((r, i) => ({
+          id: i + 1,
+          lat: r.latitude,
+          lon: r.longitude,
+          file: `${r.platform_number}_${r.cycle_number}.nc`,
+          date: r.date,
+          institution: r.institution,
+          ocean: r.ocean_name,
+          temp: r.temperature_mean,
+          sal: r.salinity_mean,
+          pres: r.pressure_mean,
+        }))
+      );
+      setSelected(null);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+      alert("Fetch failed. Check console for details.");
+    }
   };
 
+
   const fetchPlaceAndNearest = () => {
-    fetchNearest(); // for now just reuse
+    fetchNearest(); 
   };
 
   const downloadCSV = () => {
@@ -87,7 +139,7 @@ export default function NearestARGO() {
               />
             </label>
             <label className="flex flex-col text-sm">
-              <span className="text-gray-300 mb-1">Limit</span>
+              <span className="text-gray-300 mb-1">Limit (Max Results)</span>
               <input
                 type="number"
                 value={limit}
@@ -97,20 +149,31 @@ export default function NearestARGO() {
                 className="p-2 rounded bg-gray-700 border border-gray-600"
               />
             </label>
-            <div className="flex items-end">
-              <button
-                onClick={fetchNearest}
-                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
-              >
-                Find nearest floats
-              </button>
-            </div>
+            <label className="flex flex-col text-sm">
+              <span className="text-gray-300 mb-1">Radius (km, optional)</span>
+              <input
+                type="number"
+                value={radius}
+                placeholder="e.g., 100"
+                min={1}
+                onChange={(e) => setRadius(e.target.value)}
+                className="p-2 rounded bg-gray-700 border border-gray-600"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex items-end">
+            <button
+              onClick={fetchNearest}
+              className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+            >
+              Find nearest floats
+            </button>
           </div>
 
           {/* Place lookup optional */}
           <div className="mt-6 pt-4 border-t border-gray-700">
             <h2 className="text-lg font-medium text-gray-100 mb-3">
-              Place lookup (optional)
+              Place lookup (optional filters)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input

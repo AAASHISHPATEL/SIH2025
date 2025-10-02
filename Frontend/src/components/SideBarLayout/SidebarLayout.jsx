@@ -6,13 +6,14 @@ import {
   MessageCircle,
   Share2,
   Database,
-  Upload,
   LogOut,
   Menu,
   User,
+  Upload,
+  Download,
 } from "lucide-react";
 import "./SidebarLayout.css";
-import { useAuth } from "../../auth/AuthContext"; // ✅ use AuthContext
+import { useAuth } from "../../auth/AuthContext";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 
 const SidebarLayout = () => {
@@ -20,13 +21,25 @@ const SidebarLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [expBusy, setExpBusy] = useState({ parquet: false, netcdf: false });
+  const [downloadLinks, setDownloadLinks] = useState({
+    parquet: null,
+    netcdf: null,
+  });
+
   const sidebarRef = useRef(null);
   const profileRef = useRef(null);
   const navigate = useNavigate();
 
-  const { user, logout, authLoading ,authSubmitting} = useAuth(); // ✅ real user + logout from context
+  const { user, logout, authLoading, authSubmitting } = useAuth();
 
-  // Close sidebar + profile menu when clicking outside
+  useEffect(() => {
+    return () => {
+      if (downloadLinks.parquet) URL.revokeObjectURL(downloadLinks.parquet);
+      if (downloadLinks.netcdf) URL.revokeObjectURL(downloadLinks.netcdf);
+    };
+  }, [downloadLinks]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -48,6 +61,40 @@ const SidebarLayout = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sidebarOpen, menuOpen]);
 
+  const prepareParquet = async () => {
+    // Clear any existing NetCDF download when preparing Parquet
+    setDownloadLinks({ parquet: null, netcdf: null });
+    setExpBusy((b) => ({ ...b, parquet: true }));
+    await new Promise((r) => setTimeout(r, 1500));
+    const dummy = {
+      exportedAt: new Date().toISOString(),
+      rows: [{ id: 1, temp: 22.4 }],
+    };
+    const blob = new Blob([JSON.stringify(dummy, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    setDownloadLinks({ parquet: url, netcdf: null });
+    setExpBusy((b) => ({ ...b, parquet: false }));
+  };
+
+  const prepareNetCDF = async () => {
+    // Clear any existing Parquet download when preparing NetCDF
+    setDownloadLinks({ parquet: null, netcdf: null });
+    setExpBusy((b) => ({ ...b, netcdf: true }));
+    await new Promise((r) => setTimeout(r, 1500));
+    const text = `netcdf dummy {
+dimensions: sample=1;
+variables: float temp(sample);
+data: temp=22.4;
+}`;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    setDownloadLinks({ parquet: null, netcdf: url });
+    setExpBusy((b) => ({ ...b, netcdf: false }));
+  };
+
+
   return (
     <div className={`sidebar-layout ${darkMode ? "sidebar-dark" : ""}`}>
       {/* Sidebar */}
@@ -63,7 +110,7 @@ const SidebarLayout = () => {
             <Menu />
           </button>
           <div className="nav-logo-container">
-            {/* Logo with wave effect */}
+            {/* ✅ Restored original wave logo */}
             <svg
               viewBox="0 0 100 20"
               className="w-[140px] h-auto"
@@ -140,14 +187,55 @@ const SidebarLayout = () => {
           <NavLink to="/Ingest" className="sidebar-link">
             <Database /> Ingest
           </NavLink>
-          <NavLink to="/Export" className="sidebar-link">
-            <Upload /> Export
-          </NavLink>
 
-          <button
-            className="sidebar-link sidebar-logout"
-            onClick={logout} // ✅ use Auth logout
-          >
+          {/* ✅ Exports Section */}
+          <div className="sidebar-section">
+            <div className="sidebar-section-title">
+              <Upload size={16} /> Exports
+            </div>
+
+            {/* Parquet */}
+            <button
+              className="export-btn"
+              onClick={prepareParquet}
+              disabled={expBusy.parquet}
+            >
+              {expBusy.parquet
+                ? "Preparing Parquet..."
+                : "Export ingested info to Parquet"}
+            </button>
+            {downloadLinks.parquet && (
+              <a
+                href={downloadLinks.parquet}
+                download="floatchat_export.parquet"
+                className="download-btn"
+              >
+                <Download size={14} /> Download Parquet
+              </a>
+            )}
+
+            {/* NetCDF */}
+            <button
+              className="export-btn"
+              onClick={prepareNetCDF}
+              disabled={expBusy.netcdf}
+            >
+              {expBusy.netcdf
+                ? "Preparing NetCDF..."
+                : "Export ingested info to NetCDF (simple)"}
+            </button>
+            {downloadLinks.netcdf && (
+              <a
+                href={downloadLinks.netcdf}
+                download="floatchat_export.nc"
+                className="download-btn"
+              >
+                <Download size={14} /> Download NetCDF
+              </a>
+            )}
+          </div>
+
+          <button className="sidebar-link sidebar-logout" onClick={logout}>
             <LogOut /> Logout
           </button>
         </nav>
@@ -166,7 +254,6 @@ const SidebarLayout = () => {
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && <div className="sidebar-overlay"></div>}
 
       {/* Main */}
@@ -180,7 +267,7 @@ const SidebarLayout = () => {
               <Menu />
             </button>
             <div className="nav-logo-container">
-              {/* Small logo */}
+              {/* ✅ Restored topbar small logo */}
               <svg
                 viewBox="0 0 100 20"
                 className="w-[140px] h-auto"
@@ -246,7 +333,6 @@ const SidebarLayout = () => {
             </div>
           </div>
 
-          {/* Profile dropdown */}
           <div className="sidebar-profile" ref={profileRef}>
             <button
               className="sidebar-profile-toggle"
@@ -272,7 +358,6 @@ const SidebarLayout = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="sidebar-content">
           <Outlet />
         </main>

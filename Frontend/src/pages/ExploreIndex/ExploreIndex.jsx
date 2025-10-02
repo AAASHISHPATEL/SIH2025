@@ -3,11 +3,11 @@ import MapplsMap from "../../components/MapplsMap";
 
 export default function ExploreIndex() {
   // Filter states
-  const [latMin, setLatMin] = useState(23.5);
-  const [latMax, setLatMax] = useState(23.6);
-  const [lonMin, setLonMin] = useState(87.2);
-  const [lonMax, setLonMax] = useState(87.3);
-  const [ocean, setOcean] = useState("");
+  const [latMin, setLatMin] = useState(-50);
+  const [latMax, setLatMax] = useState(150);
+  const [lonMin, setLonMin] = useState(-50);
+  const [lonMax, setLonMax] = useState(150);
+  const [ocean, setOcean] = useState("Atlantic Ocean");
   const [institution, setInstitution] = useState("");
 
   // Separate date & time states
@@ -29,32 +29,52 @@ export default function ExploreIndex() {
   };
 
   // Dummy fetch — replace with real API call
-  const fetchNearest = () => {
-    const n = Math.max(1, Number(limit) || 10);
-    const latMinNum = Number(latMin);
-    const latMaxNum = Number(latMax);
-    const lonMinNum = Number(lonMin);
-    const lonMaxNum = Number(lonMax);
+    const fetchNearest = async () => {
+    const payload = {
+      min_lat: latMin,
+      max_lat: latMax,
+      min_lon: lonMin,
+      max_lon: lonMax, 
+      ocean_name: ocean,
+      institution: institution,  // Django maps this internally to data_centre_ref
+      start_date: dateFrom ? dateFrom : null,
+      end_date: dateTo ? dateTo : null,
+      year: dateFrom ? dateFrom.substring(0, 4) : null, 
+      limit: limit ? parseInt(limit) : null, // optional
+    };
+    
 
-    const combinedFrom = formatDateTime(dateFrom, timeFrom);
-    const combinedTo = formatDateTime(dateTo, timeTo);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_ARGO_BACKEND_BASE_URL}/sql-query/lookup-table/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    const data = Array.from({ length: n }, (_, i) => ({
-      id: i + 1,
-      lat: +(latMinNum + Math.random() * (latMaxNum - latMinNum)).toFixed(5),
-      lon: +(lonMinNum + Math.random() * (lonMaxNum - lonMinNum)).toFixed(5),
-      file: `csio/profile_${String(i + 1).padStart(3, "0")}.nc`,
-      date:
-        combinedFrom || `202012${(i + 1).toString().padStart(2, "0")}000000`, // fallback dummy
-      institution: institution || ["IN", "HZ", "AO"][i % 3],
-      ocean: ocean || "A",
-    }));
-
-    console.log("Query range:", combinedFrom, "→", combinedTo);
-
-    setResults(data);
-    setSelected(null);
+      const json = await response.json();
+      if (response.ok) {
+        setResults(
+          json.results.map((r, i) => ({
+            id: i + 1,
+            lat: r.latitude,
+            lon: r.longitude,
+            file: `${r.platform_number}_${r.cycle_number}.nc`,
+            date: r.date,
+            institution: r.institution,
+            ocean: r.ocean_name,
+          }))
+        );
+      } else {
+        console.error("API error:", json.error);
+      }
+    } catch (err) {
+      console.error("Fetch failed:", err);
+    }
   };
+
 
   // CSV download
   const downloadCSV = () => {
@@ -139,10 +159,10 @@ export default function ExploreIndex() {
                 className="p-2 rounded bg-gray-700 border border-gray-600"
               >
                 <option value="">Select Ocean</option>
-                <option value="A">Atlantic (A)</option>
-                <option value="P">Pacific (P)</option>
-                <option value="I">Indian (I)</option>
-                <option value="S">Southern (S)</option>
+                <option value="Atlantic Ocean">Atlantic (A)</option>
+                <option value="Pacific Ocean">Pacific (P)</option>
+                <option value="Indian Ocean">Indian (I)</option>
+                <option value="Southern Ocean">Southern (S)</option>
               </select>
             </label>
 
@@ -173,7 +193,7 @@ export default function ExploreIndex() {
 
             {/* date_from */}
             <label className="flex flex-col text-sm">
-              <span className="text-gray-300 mb-1">date_from (YYYYMMDD)</span>
+              <span className="text-gray-300 mb-1">date_from (YYYY-MM-DD)</span>
               <input
                 type="text"
                 value={dateFrom}
@@ -195,7 +215,7 @@ export default function ExploreIndex() {
 
             {/* date_to */}
             <label className="flex flex-col text-sm">
-              <span className="text-gray-300 mb-1">date_to (YYYYMMDD)</span>
+              <span className="text-gray-300 mb-1">date_to (YYYY-MM-DD)</span>
               <input
                 type="text"
                 value={dateTo}

@@ -248,3 +248,72 @@
   margin: 0;
   min-height: calc(100vh - 60px);
 }
+
+/* ===== Exports box ===== */
+.sidebar-section {
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  background: var(--sidebar-bg);
+}
+
+.sidebar-dark .sidebar-section {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--sidebar-text);
+  margin-bottom: 10px;
+}
+
+.export-btn {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  color: var(--sidebar-text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-dark .export-btn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.download-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  border: 1px solid var(--sidebar-active);
+  color: var(--sidebar-active);
+  font-size: 14px;
+}
+
+.download-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-dark .download-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

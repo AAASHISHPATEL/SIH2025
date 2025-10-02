@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import "./LoadingOverlay.css";
+// import ReactDOM from "react-dom";
 
 const LoadingOverlay = ({ label = "Loading..." }) => {
   return (
@@ -7,6 +8,7 @@ const LoadingOverlay = ({ label = "Loading..." }) => {
       <div className="spinner"></div>
       <div className="label">{label}</div>
     </div>
+   
   );
 };
 
